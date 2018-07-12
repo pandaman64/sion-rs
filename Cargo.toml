@@ -1,0 +1,10 @@
+[package]
+name = "sion-rs"
+version = "0.1.0"
+authors = ["pandaman <kointosudesuyo@infoseek.jp>"]
+
+[dependencies]
+serde = "1.0"
+serde_derive = "1.0"
+failure = "0.1"
+base64 = "0.9"
