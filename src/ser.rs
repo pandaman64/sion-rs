@@ -81,9 +81,9 @@ impl<'a> ser::Serializer for &'a mut Serializer {
     }
 
     fn serialize_bytes(self, v: &[u8]) -> Result<()> {
-        self.output += ".Data(";
+        self.output += ".Data(\"";
         self.output += &::base64::encode(v);
-        self.output += ")";
+        self.output += "\")";
         Ok(())
     }
 
