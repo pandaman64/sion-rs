@@ -1,4 +1,5 @@
 pub mod ser;
+use sequence::{Array, Map};
 
 #[derive(Debug)]
 pub enum Value {
@@ -9,8 +10,8 @@ pub enum Value {
     String(String),
     Data(Vec<u8>),
     Date(f64),
-    Array(Vec<Value>),
-    Map(Vec<(Value, Value)>),
+    Array(Array),
+    Map(Map),
 }
 
 #[cfg(test)]
@@ -40,22 +41,24 @@ mod tests {
         use super::Value::*;
         use to_string;
 
-        assert_eq!(to_string(&Map(vec![
-            (String("array".into()), Array(vec![
-                Nil,
-                Bool(true),
-                Int(1),
-                Double(1.1),
-                String("one".into()),
-                Array(vec![Int(1)]),
-                Map(vec![(String("one".into()), Double(1.1))]),
-            ])),
+        assert_eq!(to_string(&Map(::sequence::Map { contents: vec![
+            (String("array".into()), Array(::sequence::Array {
+                contents: vec![
+                    Nil,
+                    Bool(true),
+                    Int(1),
+                    Double(1.1),
+                    String("one".into()),
+                    Array(::sequence::Array { contents: vec![Int(1)] }),
+                    Map(::sequence::Map { contents: vec![(String("one".into()), Double(1.1))] }),
+                ]
+            })),
             (Nil, String("Unlike JSON and Property Lists,".into())),
             (Bool(true), String("Yes, SION".into())),
             (Int(1), String("does accept".into())),
             (Double(1.1), String("non-String keys.".into())),
-            (Array(vec![]), String("like".into())),
-            (Map(vec![]), String("Map of ECMAScript.".into())),
-        ])).unwrap(), r#"["array":[nil,true,1,1.1,"one",[1],["one":1.1]],nil:"Unlike JSON and Property Lists,",true:"Yes, SION",1:"does accept",1.1:"non-String keys.",[]:"like",[:]:"Map of ECMAScript."]"#);
+            (Array(::sequence::Array { contents: vec![] }), String("like".into())),
+            (Map(::sequence::Map { contents: vec![] }), String("Map of ECMAScript.".into())),
+        ]})).unwrap(), r#"["array":[nil,true,1,1.1,"one",[1],["one":1.1]],nil:"Unlike JSON and Property Lists,",true:"Yes, SION",1:"does accept",1.1:"non-String keys.",[]:"like",[:]:"Map of ECMAScript."]"#);
     }
 }

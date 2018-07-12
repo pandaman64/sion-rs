@@ -1,13 +1,13 @@
 use super::{Error, Result};
 use serde::ser::{self, Serialize};
 
-pub(crate) struct Serializer {
+pub struct Serializer {
     output: String,
 }
 
 pub fn to_string<T>(value: &T) -> Result<String>
 where
-    T: Serialize,
+    T: Serialize + ?Sized,
 {
     let mut serializer = Serializer {
         output: String::new(),

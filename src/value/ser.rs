@@ -15,14 +15,14 @@ impl Serialize for Value {
             String(s) => serializer.serialize_str(s),
             Data(v) => serializer.serialize_bytes(v),
             Date(_) => unimplemented!(),
-            Array(v) => {
+            Array(::sequence::Array { contents: v }) => {
                 let mut seq = serializer.serialize_seq(Some(v.len()))?;
                 for x in v.iter() {
                     seq.serialize_element(x)?;
                 }
                 seq.end()
             }
-            Map(m) => {
+            Map(::sequence::Map { contents: m }) => {
                 let mut map = serializer.serialize_map(Some(m.len()))?;
                 for (key, value) in m.iter() {
                     map.serialize_entry(key, value)?;
