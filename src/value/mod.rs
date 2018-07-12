@@ -34,4 +34,28 @@ mod tests {
             ".Data(\"wKgAAQ==\")"
         );
     }
+
+    #[test]
+    fn test_serialize_compound() {
+        use super::Value::*;
+        use to_string;
+
+        assert_eq!(to_string(&Map(vec![
+            (String("array".into()), Array(vec![
+                Nil,
+                Bool(true),
+                Int(1),
+                Double(1.1),
+                String("one".into()),
+                Array(vec![Int(1)]),
+                Map(vec![(String("one".into()), Double(1.1))]),
+            ])),
+            (Nil, String("Unlike JSON and Property Lists,".into())),
+            (Bool(true), String("Yes, SION".into())),
+            (Int(1), String("does accept".into())),
+            (Double(1.1), String("non-String keys.".into())),
+            (Array(vec![]), String("like".into())),
+            (Map(vec![]), String("Map of ECMAScript.".into())),
+        ])).unwrap(), r#"["array":[nil,true,1,1.1,"one",[1],["one":1.1]],nil:"Unlike JSON and Property Lists,",true:"Yes, SION",1:"does accept",1.1:"non-String keys.",[]:"like",[:],"Map of ECMAScript."]"#);
+    }
 }
