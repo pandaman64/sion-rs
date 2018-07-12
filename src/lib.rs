@@ -1,10 +1,15 @@
+#[macro_use]
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate base64;
 extern crate failure;
+#[macro_use]
+extern crate nom;
 
+pub mod de;
 pub mod error;
+mod number;
 pub mod ser;
 pub mod value;
 
