@@ -29,7 +29,7 @@ mod tests {
             name: "dankogai".into(),
             age: 48,
         };
-        let expected = r#"{"name":"dankogai","age":48}"#;
+        let expected = r#"["name":"dankogai","age":48]"#;
         assert_eq!(to_string(&person).unwrap(), expected);
     }
 }

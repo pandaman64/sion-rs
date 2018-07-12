@@ -56,6 +56,6 @@ mod tests {
             (Double(1.1), String("non-String keys.".into())),
             (Array(vec![]), String("like".into())),
             (Map(vec![]), String("Map of ECMAScript.".into())),
-        ])).unwrap(), r#"["array":[nil,true,1,1.1,"one",[1],["one":1.1]],nil:"Unlike JSON and Property Lists,",true:"Yes, SION",1:"does accept",1.1:"non-String keys.",[]:"like",[:],"Map of ECMAScript."]"#);
+        ])).unwrap(), r#"["array":[nil,true,1,1.1,"one",[1],["one":1.1]],nil:"Unlike JSON and Property Lists,",true:"Yes, SION",1:"does accept",1.1:"non-String keys.",[]:"like",[:]:"Map of ECMAScript."]"#);
     }
 }

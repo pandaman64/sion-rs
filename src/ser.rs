@@ -133,11 +133,11 @@ impl<'a> ser::Serializer for &'a mut Serializer {
     where
         T: Serialize + ?Sized,
     {
-        self.output += "{";
+        self.output += "[";
         variant.serialize(&mut *self)?;
         self.output += ":";
         value.serialize(&mut *self)?;
-        self.output += "}";
+        self.output += "]";
         Ok(())
     }
 
@@ -161,14 +161,14 @@ impl<'a> ser::Serializer for &'a mut Serializer {
         variant: &'static str,
         _len: usize,
     ) -> Result<Self> {
-        self.output += "{";
+        self.output += "[";
         variant.serialize(&mut *self)?;
         self.output += ":";
         Ok(self)
     }
 
     fn serialize_map(self, _len: Option<usize>) -> Result<Self> {
-        self.output += "{";
+        self.output += "[";
         Ok(self)
     }
 
@@ -183,9 +183,9 @@ impl<'a> ser::Serializer for &'a mut Serializer {
         variant: &'static str,
         _len: usize,
     ) -> Result<Self> {
-        self.output += "{";
+        self.output += "[";
         variant.serialize(&mut *self)?;
-        self.output += ":{";
+        self.output += ":[";
         Ok(self)
     }
 }
@@ -245,7 +245,7 @@ impl<'a> ser::SerializeTupleStruct for &'a mut Serializer {
     }
 
     fn end(self) -> Result<()> {
-        self.output += "]}";
+        self.output += "]]";
         Ok(())
     }
 }
@@ -278,7 +278,7 @@ impl<'a> ser::SerializeMap for &'a mut Serializer {
     where
         T: Serialize + ?Sized,
     {
-        if !self.output.ends_with("{") {
+        if !self.output.ends_with("[") {
             self.output += ",";
         }
         key.serialize(&mut **self)
@@ -293,7 +293,10 @@ impl<'a> ser::SerializeMap for &'a mut Serializer {
     }
 
     fn end(self) -> Result<()> {
-        self.output += "}";
+        if self.output.ends_with("[") {
+            self.output += ":";
+        }
+        self.output += "]";
         Ok(())
     }
 }
@@ -306,7 +309,7 @@ impl<'a> ser::SerializeStruct for &'a mut Serializer {
     where
         T: Serialize + ?Sized,
     {
-        if !self.output.ends_with("{") {
+        if !self.output.ends_with("[") {
             self.output += ",";
         }
         key.serialize(&mut **self)?;
@@ -315,7 +318,10 @@ impl<'a> ser::SerializeStruct for &'a mut Serializer {
     }
 
     fn end(self) -> Result<()> {
-        self.output += "}";
+        if self.output.ends_with("[") {
+            self.output += ":";
+        }
+        self.output += "]";
         Ok(())
     }
 }
@@ -328,7 +334,7 @@ impl<'a> ser::SerializeStructVariant for &'a mut Serializer {
     where
         T: Serialize + ?Sized,
     {
-        if !self.output.ends_with("{") {
+        if !self.output.ends_with("[") {
             self.output += ",";
         }
         key.serialize(&mut **self)?;
@@ -337,7 +343,10 @@ impl<'a> ser::SerializeStructVariant for &'a mut Serializer {
     }
 
     fn end(self) -> Result<()> {
-        self.output += "}}";
+        if self.output.ends_with("[") {
+            self.output += ":";
+        }
+        self.output += "]]";
         Ok(())
     }
 }
