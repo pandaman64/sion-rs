@@ -64,18 +64,17 @@ impl ParseResult {
         let fractional = parse_int(radix, fractional) as f64;
         let exponent = parse_int(radix, exponent) as i32;
 
-        let v = if exponent_sign == self::Sign::Positive {
-            (integer
+        let base = if fractional != 0.0 {
+            integer
                 + fractional
-                    / f64::from(radix.radix())
-                        .powf(fractional.log(f64::from(radix.radix())).ceil()))
-                * f64::from(radix.exponent()).powi(exponent)
+                    / f64::from(radix.radix()).powf(fractional.log(f64::from(radix.radix())).ceil())
         } else {
-            (integer
-                + fractional
-                    / f64::from(radix.radix())
-                        .powf(fractional.log(f64::from(radix.radix())).ceil()))
-                * f64::from(radix.exponent()).powi(-exponent)
+            integer
+        };
+        let v = if exponent_sign == self::Sign::Positive {
+            base * f64::from(radix.exponent()).powi(exponent)
+        } else {
+            base * f64::from(radix.exponent()).powi(-exponent)
         };
         if sign == self::Sign::Positive {
             Double(v)
@@ -639,5 +638,18 @@ mod tests {
         assert_eq!(parser.input, "hoge");
         assert_eq!(parser.state, Done);
         assert_eq!(result, Double(-0.1234));
+    }
+
+    #[test]
+    fn test_one_point_zero() {
+        use super::ParseResult::*;
+        use super::Parser;
+        use super::ParserState::Done;
+
+        let mut parser = Parser::new("1.0");
+        let result = parser.run().unwrap();
+        assert_eq!(parser.input, "");
+        assert_eq!(parser.state, Done);
+        assert_eq!(result, Double(1.0));
     }
 }
