@@ -164,7 +164,29 @@ impl<'de, 'a> ::serde::de::Deserializer<'de> for &'a mut Deserializer<'de> {
                 }
             },
             // array or map
-            '[' => return Err(self::Error::UnexpectedOpenBracket),
+            '[' => {
+                // FIXME: VERY INEFFICIENT: deserialize a Value and throw it away!
+                // create a deserializer to look ahead
+                let mut deserializer = Deserializer { input: self.input };
+                deserializer.skip()?;
+                deserializer.trim()?;
+
+                // empty sequence
+                match deserializer.peek()? {
+                    ']' => return self.deserialize_seq(visitor),
+                    ':' => return self.deserialize_map(visitor),
+                    _ => {},
+                }
+
+                // this sequence has a value, parse it and discard
+                ::value::Value::deserialize(&mut deserializer)?;
+                deserializer.trim()?;
+                match deserializer.peek()? {
+                    ',' | ']' => self.deserialize_seq(visitor),
+                    ':' => self.deserialize_map(visitor),
+                    _ => Err(self::Error::Expected("',', ], :".into()))
+                }
+            },
             // int or double
             '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
             // NaN
@@ -318,11 +340,12 @@ impl<'a, 'de: 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
     where
         T: DeserializeSeed<'de>,
     {
-        // TODO: handle spaces
+        self.deserializer.trim()?;
         if self.deserializer.peek()? == ']' {
             return Ok(None);
         }
         if !self.first {
+            self.deserializer.trim()?;
             self.deserializer.expect(',', self::Error::ExpectedComma)?;
         }
         self.first = false;
@@ -337,7 +360,7 @@ impl<'a, 'de: 'a> MapAccess<'de> for CommaSeparated<'a, 'de> {
     where
         K: DeserializeSeed<'de>,
     {
-        // TODO: handle spaces
+        self.deserializer.trim()?;
         match self.deserializer.peek()? {
             ']' if !self.first => return Ok(None),
             ':' if self.first => {
@@ -347,8 +370,8 @@ impl<'a, 'de: 'a> MapAccess<'de> for CommaSeparated<'a, 'de> {
             _ => {}
         }
         if !self.first {
-            let e = self::Error::Expected(format!("{:?}", self));
-            self.deserializer.expect(',', e)?;
+            self.deserializer.trim()?;
+            self.deserializer.expect(',', self::Error::ExpectedComma)?;
         }
         self.first = false;
         seed.deserialize(&mut *self.deserializer).map(Some)
@@ -358,6 +381,7 @@ impl<'a, 'de: 'a> MapAccess<'de> for CommaSeparated<'a, 'de> {
     where
         V: DeserializeSeed<'de>,
     {
+        self.deserializer.trim()?;
         self.deserializer.expect(':', self::Error::ExpectedColon)?;
         seed.deserialize(&mut *self.deserializer)
     }

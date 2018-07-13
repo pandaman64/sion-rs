@@ -82,4 +82,110 @@ mod tests {
             Data(vec![192, 168, 0, 1])
         );
     }
+
+    #[test]
+    fn test_deserialize_compound() {
+        use super::Value::{self, *};
+        use from_str;
+        use sequence::{Array as A, Map as M};
+
+        let input = r#"
+[
+    "array": [
+        nil,
+        true,
+        1,      // Int in decimal
+        1.0,    // Double in decimal
+        "one",
+        [1],
+        ["one" : 1.0]
+    ],
+    "bool": true,
+    "data": .Data("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"),
+    "dictionary": [
+        "array" : [],
+        "bool" : false,
+        "double" : 0.0,
+        "int" : 0,
+        "nil" : nil,
+        "object" : [:],
+        "string" : ""
+    ],
+    "string": "漢字、カタカナ、ひらがなの入ったstring😇",
+    "url": "https://github.com/dankogai/",
+    nil   : "Unlike JSON and Property Lists,",
+    true  : "Yes, SION",
+    1     : "does accept",
+    1.0   : "non-String keys.",
+    []    : "like",
+    [:]   : "Map of ECMAScript."
+]"#;
+        let expected = Map(M {
+            contents: vec![
+                (
+                    String("array".into()),
+                    Array(A {
+                        contents: vec![
+                            Nil,
+                            Bool(true),
+                            Int(1),
+                            Double(1.0),
+                            String("one".into()),
+                            Array(A {
+                                contents: vec![Int(1)],
+                            }),
+                            Map(M {
+                                contents: vec![(String("one".into()), Double(1.0))],
+                            }),
+                        ],
+                    }),
+                ),
+                (String("bool".into()), Bool(true)),
+                (
+                    String("data".into()),
+                    Data(vec![
+                        0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x01, 0x00, 0x01, 0x00, 0x80, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x21, 0xf9, 0x04, 0x01, 0x00,
+                        0x00, 0x00, 0x00, 0x2c, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
+                        0x00, 0x02, 0x01, 0x44, 0x00, 0x3b,
+                    ]),
+                ),
+                (
+                    String("dictionary".into()),
+                    Map(M {
+                        contents: vec![
+                            (String("array".into()), Array(A { contents: vec![] })),
+                            (String("bool".into()), Bool(false)),
+                            (String("double".into()), Double(0.0)),
+                            (String("int".into()), Int(0)),
+                            (String("nil".into()), Nil),
+                            (String("object".into()), Map(M { contents: vec![] })),
+                            (String("string".into()), String("".into())),
+                        ],
+                    }),
+                ),
+                (
+                    String("string".into()),
+                    String("漢字、カタカナ、ひらがなの入ったstring😇".into()),
+                ),
+                (
+                    String("url".into()),
+                    String("https://github.com/dankogai/".into()),
+                ),
+                (Nil, String("Unlike JSON and Property Lists,".into())),
+                (Bool(true), String("Yes, SION".into())),
+                (Int(1), String("does accept".into())),
+                (Double(1.0), String("non-String keys.".into())),
+                (
+                    Array(::sequence::Array { contents: vec![] }),
+                    String("like".into()),
+                ),
+                (
+                    Map(::sequence::Map { contents: vec![] }),
+                    String("Map of ECMAScript.".into()),
+                ),
+            ],
+        });
+        assert_eq!(from_str::<Value>(input).unwrap(), expected);
+    }
 }
