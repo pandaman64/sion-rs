@@ -1,5 +1,6 @@
 use super::{Error, Result};
 use serde::de::{Deserialize, Visitor};
+use ::serde::de::{SeqAccess, MapAccess, DeserializeSeed};
 
 pub struct Deserializer<'de> {
     input: &'de str,
@@ -106,9 +107,21 @@ impl<'de, 'a> ::serde::de::Deserializer<'de> for &'a mut Deserializer<'de> {
                 return self.deserialize_any(visitor);
             }
             // string
-            '"' => unimplemented!(),
-            // an array or a map
-            '[' => unimplemented!(),
+            '"' => {
+                use ::std::borrow::Cow::*;
+                match ::string::parse_string_literal(self.input)? {
+                    (Borrowed(s), output) => {
+                        self.input = output;
+                        visitor.visit_borrowed_str(s)
+                    },
+                    (Owned(s), output) => {
+                        self.input = output;
+                        visitor.visit_string(s)
+                    }
+                }
+            },
+            // array or map
+            '[' => return Err(self::Error::UnexpectedOpenBracket),
             // int or double
             '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
             // NaN
@@ -135,9 +148,93 @@ impl<'de, 'a> ::serde::de::Deserializer<'de> for &'a mut Deserializer<'de> {
         }
     }
 
+    fn deserialize_seq<V>(mut self, visitor: V) -> Result<V::Value>
+    where
+        V: Visitor<'de>
+    {
+        self.expect('[', self::Error::ExpectOpenBracket)?;
+        let seq = visitor.visit_seq(CommaSeparated::new(&mut *self))?;
+        self.expect(']', self::Error::ExpectCloseBracket)?;
+        Ok(seq)
+    }
+
+    fn deserialize_tuple<V>(self, _len: usize, visitor: V) -> Result<V::Value>
+    where
+        V: Visitor<'de>
+    {
+        self.deserialize_seq(visitor)
+    }
+
+    fn deserialize_tuple_struct<V>(self, _name: &'static str, _len: usize, visitor: V) -> Result<V::Value> 
+    where
+        V: Visitor<'de>
+    {
+        self.deserialize_seq(visitor)
+    }
+
+    fn deserialize_map<V>(mut self, visitor: V) -> Result<V::Value>
+    where
+        V: Visitor<'de>
+    {
+        self.expect('[', self::Error::ExpectOpenBracket)?;
+        let map = visitor.visit_map(CommaSeparated::new(&mut *self))?;
+        self.expect(']', self::Error::ExpectCloseBracket)?;
+        Ok(map)
+    }
+
+    fn deserialize_struct<V>(self, _name: &'static str, _fields: &'static [&'static str], visitor: V) -> Result<V::Value>
+    where
+        V: Visitor<'de>
+    {
+        self.deserialize_map(visitor)
+    }
+
     forward_to_deserialize_any! {
         bool i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64 char str string
-        bytes byte_buf option unit unit_struct newtype_struct seq tuple
-        tuple_struct map struct enum identifier ignored_any
+        bytes byte_buf option unit unit_struct newtype_struct
+        enum identifier ignored_any
+    }
+}
+
+struct CommaSeparated<'a, 'de: 'a> {
+    deserializer: &'a mut Deserializer<'de>,
+    first: bool,
+}
+
+impl<'a, 'de: 'a> CommaSeparated<'a, 'de> {
+    fn new(deserializer: &'a mut Deserializer<'de>) -> Self {
+        CommaSeparated {
+            deserializer,
+            first: true,
+        }
+    }
+}
+
+impl<'a, 'de: 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
+    type Error = Error;
+
+    fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>>
+    where
+        T: DeserializeSeed<'de>
+    {
+        unimplemented!()
+    }
+}
+
+impl<'a, 'de: 'a> MapAccess<'de> for CommaSeparated<'a, 'de> {
+    type Error = Error;
+
+    fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>>
+    where
+        K: DeserializeSeed<'de>
+    {
+        unimplemented!()
+    }
+
+    fn next_value_seed<V>(&mut self, seed: V) -> Result<V::Value>
+    where
+        V: DeserializeSeed<'de>
+    {
+        unimplemented!()
     }
 }

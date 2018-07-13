@@ -13,9 +13,14 @@ pub enum Error {
     ExpectExponent,
     ExpectDecimalDigit,
     ExpectHexadecimalDigit,
+    ExpectOpenBracket,
+    ExpectCloseBracket,
     Expected(String),
     UnexpectedUnderBar,
     UnexpectedSign,
+    UnexpectedLineBreak(char),
+    UnexpectedOpenBracket,
+    UnicodeConversionError(u32),
 }
 
 impl Display for Error {
@@ -33,9 +38,14 @@ impl Display for Error {
             ExpectExponent => write!(f, "expected exponent part"),
             ExpectDecimalDigit => write!(f, "expected decimal digit"),
             ExpectHexadecimalDigit => write!(f, "expected hexadecimal digit"),
+            ExpectOpenBracket => write!(f, "expected open bracket"),
+            ExpectCloseBracket => write!(f, "expected close bracket"),
             Expected(s) => write!(f, "expected: {}", s),
             UnexpectedUnderBar => write!(f, "unexpected under bar"),
             UnexpectedSign => write!(f, "unexpected sign"),
+            UnexpectedLineBreak(c) => write!(f, "unexpected line break: {}", c.escape_debug()),
+            UnexpectedOpenBracket => write!(f, "unexpected open bracket"),
+            UnicodeConversionError(x) => write!(f, "failed to convert into unicode: {}", x),
         }
     }
 }

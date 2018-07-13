@@ -4,17 +4,19 @@ extern crate serde;
 extern crate serde_derive;
 extern crate base64;
 extern crate failure;
-#[macro_use]
-extern crate nom;
+extern crate try_from;
 
 pub mod de;
 pub mod error;
 mod number;
 pub mod ser;
+pub mod sequence;
+mod string;
 pub mod value;
 
 pub use error::Error;
 pub use ser::to_string;
+pub use de::from_str;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
