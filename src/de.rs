@@ -94,7 +94,7 @@ impl<'de> Deserializer<'de> {
             // comment
             Ok('/') => {
                 self.skip()?;
-                self.expect('/', self::Error::ExpectSlash)?;
+                self.expect('/', self::Error::ExpectedSlash)?;
                 self.skip_line();
                 self.trim()
             }
@@ -128,7 +128,7 @@ impl<'de, 'a> ::serde::de::Deserializer<'de> for &'a mut Deserializer<'de> {
                     self.input = &self.input["nil".len()..];
                     visitor.visit_unit()
                 } else {
-                    Err(self::Error::ExpectNil)
+                    Err(self::Error::ExpectedNil)
                 }
             }
             // true
@@ -137,7 +137,7 @@ impl<'de, 'a> ::serde::de::Deserializer<'de> for &'a mut Deserializer<'de> {
                     self.input = &self.input["true".len()..];
                     visitor.visit_bool(true)
                 } else {
-                    Err(self::Error::ExpectTrue)
+                    Err(self::Error::ExpectedTrue)
                 }
             }
             // false
@@ -146,7 +146,7 @@ impl<'de, 'a> ::serde::de::Deserializer<'de> for &'a mut Deserializer<'de> {
                     self.input = &self.input["false".len()..];
                     visitor.visit_bool(false)
                 } else {
-                    Err(self::Error::ExpectFalse)
+                    Err(self::Error::ExpectedFalse)
                 }
             }
             // string
@@ -203,27 +203,27 @@ impl<'de, 'a> ::serde::de::Deserializer<'de> for &'a mut Deserializer<'de> {
                         if self.input.starts_with("Data") {
                             self.input = &self.input["Data".len()..];
                             self.trim()?;
-                            self.expect('(', self::Error::ExpectOpenBracket)?;
+                            self.expect('(', self::Error::ExpectedOpenBracket)?;
                             self.trim()?;
                             let (literal, output) = ::string::parse_string_literal(self.input)?;
                             self.input = output;
                             let data = ::base64::decode(literal.as_bytes())
                                 .map_err(|_| self::Error::Base64DecodeError)?;
                             self.trim()?;
-                            self.expect(')', self::Error::ExpectCloseBracket)?;
+                            self.expect(')', self::Error::ExpectedCloseBracket)?;
 
                             visitor.visit_bytes(&data)
                         } else if self.input.starts_with("Date") {
                             self.input = &self.input["Date".len()..];
                             self.trim()?;
-                            self.expect('(', self::Error::ExpectOpenBracket)?;
+                            self.expect('(', self::Error::ExpectedOpenBracket)?;
                             self.trim()?;
                             let mut parser = Parser::new(self.input);
                             match parser.run()? {
-                                Int(x) => Err(self::Error::ExpectDouble(x)),
+                                Int(x) => Err(self::Error::ExpectedDouble(x)),
                                 Double(f) => {
                                     self.trim()?;
-                                    self.expect(')', self::Error::ExpectCloseBracket)?;
+                                    self.expect(')', self::Error::ExpectedCloseBracket)?;
 
                                     visitor.visit_f64(f)
                                 }
@@ -242,9 +242,9 @@ impl<'de, 'a> ::serde::de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        self.expect('[', self::Error::ExpectOpenBracket)?;
+        self.expect('[', self::Error::ExpectedOpenBracket)?;
         let seq = visitor.visit_seq(CommaSeparated::new(&mut *self))?;
-        self.expect(']', self::Error::ExpectCloseBracket)?;
+        self.expect(']', self::Error::ExpectedCloseBracket)?;
         Ok(seq)
     }
 
@@ -271,9 +271,9 @@ impl<'de, 'a> ::serde::de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        self.expect('[', self::Error::ExpectOpenBracket)?;
+        self.expect('[', self::Error::ExpectedOpenBracket)?;
         let map = visitor.visit_map(CommaSeparated::new(&mut *self))?;
-        self.expect(']', self::Error::ExpectCloseBracket)?;
+        self.expect(']', self::Error::ExpectedCloseBracket)?;
         Ok(map)
     }
 
@@ -323,7 +323,7 @@ impl<'a, 'de: 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
             return Ok(None);
         }
         if !self.first {
-            self.deserializer.expect(',', self::Error::ExpectComma)?;
+            self.deserializer.expect(',', self::Error::ExpectedComma)?;
         }
         self.first = false;
         seed.deserialize(&mut *self.deserializer).map(Some)
@@ -358,7 +358,7 @@ impl<'a, 'de: 'a> MapAccess<'de> for CommaSeparated<'a, 'de> {
     where
         V: DeserializeSeed<'de>,
     {
-        self.deserializer.expect(':', self::Error::ExpectColon)?;
+        self.deserializer.expect(':', self::Error::ExpectedColon)?;
         seed.deserialize(&mut *self.deserializer)
     }
 }

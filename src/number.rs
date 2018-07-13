@@ -181,7 +181,7 @@ impl ParserState {
                 self::Sign::Positive,
                 "0",
             )),
-            Double { fraction: None, .. } => Err(self::Error::ExpectFraction),
+            Double { fraction: None, .. } => Err(self::Error::ExpectedFraction),
             DoubleExponent {
                 sign,
                 radix,
@@ -197,7 +197,7 @@ impl ParserState {
                 exponent_sign.unwrap_or(self::Sign::Positive),
                 &s[exponent.0..exponent.1],
             )),
-            DoubleExponent { exponent: None, .. } => Err(self::Error::ExpectExponent),
+            DoubleExponent { exponent: None, .. } => Err(self::Error::ExpectedExponent),
         }
     }
 }
@@ -264,10 +264,10 @@ impl<'de> Parser<'de> {
                         };
                         self.skip()?;
                     } else if c == 'N' {
-                        self.expect("NaN", self::Error::ExpectNaN)?;
+                        self.expect("NaN", self::Error::ExpectedNaN)?;
                         return Ok(ParseResult::Double(::std::f64::NAN));
                     } else if c == 'I' {
-                        self.expect("Infinity", self::Error::ExpectInfinity)?;
+                        self.expect("Infinity", self::Error::ExpectedInfinity)?;
                         return Ok(ParseResult::Double(::std::f64::INFINITY));
                     } else if c == '-' {
                         self.state = NegStart;
@@ -323,7 +323,7 @@ impl<'de> Parser<'de> {
                         };
                         self.skip()?;
                     } else if c == 'I' {
-                        self.expect("Infinity", self::Error::ExpectInfinity)?;
+                        self.expect("Infinity", self::Error::ExpectedInfinity)?;
                         return Ok(ParseResult::Double(::std::f64::NEG_INFINITY));
                     } else if c == '.' {
                         self.state = Double {
@@ -346,7 +346,7 @@ impl<'de> Parser<'de> {
                         };
                         self.skip()?;
                     } else {
-                        return Err(self::Error::ExpectHexadecimalDigit);
+                        return Err(self::Error::ExpectedHexadecimalDigit);
                     }
                 }
                 IntOrDouble {
@@ -425,7 +425,7 @@ impl<'de> Parser<'de> {
                             };
                             self.skip()?;
                         } else {
-                            return Err(self::Error::ExpectFraction);
+                            return Err(self::Error::ExpectedFraction);
                         }
                     } else {
                         return Double {
