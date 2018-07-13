@@ -17,12 +17,14 @@ pub enum Error {
     ExpectCloseBracket,
     ExpectComma,
     ExpectColon,
+    ExpectDouble(i64),
     Expected(String),
     UnexpectedUnderBar,
     UnexpectedSign,
     UnexpectedLineBreak(char),
     UnexpectedOpenBracket,
     UnicodeConversionError(u32),
+    Base64DecodeError,
 }
 
 impl Display for Error {
@@ -44,12 +46,14 @@ impl Display for Error {
             ExpectCloseBracket => write!(f, "expected close bracket"),
             ExpectComma => write!(f, "expected comma"),
             ExpectColon => write!(f, "expected colon"),
+            ExpectDouble(x) => write!(f, "expected double: {}", x),
             Expected(s) => write!(f, "expected: {}", s),
             UnexpectedUnderBar => write!(f, "unexpected under bar"),
             UnexpectedSign => write!(f, "unexpected sign"),
             UnexpectedLineBreak(c) => write!(f, "unexpected line break: {}", c.escape_debug()),
             UnexpectedOpenBracket => write!(f, "unexpected open bracket"),
             UnicodeConversionError(x) => write!(f, "failed to convert into unicode: {}", x),
+            Base64DecodeError => write!(f, "failed to decode base64"),
         }
     }
 }

@@ -46,8 +46,8 @@ impl<'de> Deserializer<'de> {
         }
     }
 
-    // skip until one of "\r", "\n", "\r\n"
-    fn skip_line(&mut self) -> Result<()> {
+    // skip until feed one of "\r", "\n", "\r\n"
+    fn skip_line(&mut self) {
         enum State {
             Normal(usize),
             EncounterCR(usize),
@@ -87,7 +87,24 @@ impl<'de> Deserializer<'de> {
         }
 
         self.input = &self.input[state.fed_bytes()..];
-        Ok(())
+    }
+
+    fn trim(&mut self) -> Result<()> {
+        match self.peek() {
+            // comment
+            Ok('/') => {
+                self.skip()?;
+                self.expect('/', self::Error::ExpectSlash)?;
+                self.skip_line();
+                self.trim()
+            }
+            // whitespaces
+            Ok(c) if c.is_whitespace() => {
+                self.skip()?;
+                self.trim()
+            }
+            _ => Ok(()),
+        }
     }
 }
 
@@ -100,11 +117,10 @@ impl<'de, 'a> ::serde::de::Deserializer<'de> for &'a mut Deserializer<'de> {
     {
         let first = self.peek()?;
         match first {
-            // comment
-            '/' => {
-                self.expect('/', self::Error::ExpectSlash)?;
-                self.skip_line()?;
-                return self.deserialize_any(visitor);
+            // comment or white spaces
+            c if c == '/' || c.is_whitespace() => {
+                self.trim()?;
+                self.deserialize_any(visitor)
             }
             // string
             '"' => {
@@ -145,11 +161,52 @@ impl<'de, 'a> ::serde::de::Deserializer<'de> for &'a mut Deserializer<'de> {
                 }
             },
             // double, data, date
-            '.' => unimplemented!(),
-            c if c.is_whitespace() => {
-                self.skip()?;
-                return self.deserialize_any(visitor);
-            }
+            '.' => {
+                use number::{Parser, ParseResult::*};
+
+                let mut parser = Parser::new(self.input);
+                match parser.run() {
+                    Ok(Int(_)) => unreachable!(),
+                    Ok(Double(f)) => {
+                        self.input = parser.get_output();
+                        visitor.visit_f64(f)
+                    },
+                    Err(_) => {
+                        self.skip()?;
+                        if self.input.starts_with("Data") {
+                            self.input = &self.input["Data".len()..];
+                            self.trim()?;
+                            self.expect('(', self::Error::ExpectOpenBracket)?;
+                            self.trim()?;
+                            let (literal, output) = ::string::parse_string_literal(self.input)?;
+                            self.input = output;
+                            let data = ::base64::decode(literal.as_bytes())
+                                .map_err(|_| self::Error::Base64DecodeError)?;
+                            self.trim()?;
+                            self.expect(')', self::Error::ExpectCloseBracket)?;
+
+                            visitor.visit_bytes(&data)
+                        } else if self.input.starts_with("Date") {
+                            self.input = &self.input["Date".len()..];
+                            self.trim()?;
+                            self.expect('(', self::Error::ExpectOpenBracket)?;
+                            self.trim()?;
+                            let mut parser = Parser::new(self.input);
+                            match parser.run()? {
+                                Int(x) => Err(self::Error::ExpectDouble(x)),
+                                Double(f) => {
+                                    self.trim()?;
+                                    self.expect(')', self::Error::ExpectCloseBracket)?;
+
+                                    visitor.visit_f64(f)
+                                }
+                            }
+                        } else {
+                            Err(self::Error::Expected("Double, Data, or Date".into()))
+                        }
+                    }
+                }
+            },
             _ => unimplemented!(),
         }
     }
