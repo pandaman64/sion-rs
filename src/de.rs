@@ -122,6 +122,33 @@ impl<'de, 'a> ::serde::de::Deserializer<'de> for &'a mut Deserializer<'de> {
                 self.trim()?;
                 self.deserialize_any(visitor)
             }
+            // nil
+            'n' => {
+                if self.input.starts_with("nil") {
+                    self.input = &self.input["nil".len()..];
+                    visitor.visit_unit()
+                } else {
+                    Err(self::Error::ExpectNil)
+                }
+            }
+            // true
+            't' => {
+                if self.input.starts_with("true") {
+                    self.input = &self.input["true".len()..];
+                    visitor.visit_bool(true)
+                } else {
+                    Err(self::Error::ExpectTrue)
+                }
+            }
+            // false
+            'f' => {
+                if self.input.starts_with("false") {
+                    self.input = &self.input["false".len()..];
+                    visitor.visit_bool(false)
+                } else {
+                    Err(self::Error::ExpectFalse)
+                }
+            }
             // string
             '"' => {
                 use ::std::borrow::Cow::*;
@@ -207,7 +234,7 @@ impl<'de, 'a> ::serde::de::Deserializer<'de> for &'a mut Deserializer<'de> {
                     }
                 }
             },
-            _ => unimplemented!(),
+            c => unreachable!("{}", c),
         }
     }
 

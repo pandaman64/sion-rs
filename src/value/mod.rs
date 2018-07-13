@@ -1,7 +1,8 @@
+pub mod de;
 pub mod ser;
 use sequence::{Array, Map};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Value {
     Nil,
     Bool(bool),
@@ -60,5 +61,25 @@ mod tests {
             (Array(::sequence::Array { contents: vec![] }), String("like".into())),
             (Map(::sequence::Map { contents: vec![] }), String("Map of ECMAScript.".into())),
         ]})).unwrap(), r#"["array":[nil,true,1,1.1,"one",[1],["one":1.1]],nil:"Unlike JSON and Property Lists,",true:"Yes, SION",1:"does accept",1.1:"non-String keys.",[]:"like",[:]:"Map of ECMAScript."]"#);
+    }
+
+    #[test]
+    fn test_deserialize_simple() {
+        use super::Value::{self, *};
+        use from_str;
+
+        assert_eq!(from_str::<Value>("nil").unwrap(), Nil);
+        assert_eq!(from_str::<Value>("true").unwrap(), Bool(true));
+        assert_eq!(from_str::<Value>("false").unwrap(), Bool(false));
+        assert_eq!(from_str::<Value>("42").unwrap(), Int(42));
+        assert_eq!(from_str::<Value>("3.1415").unwrap(), Double(3.1415));
+        assert_eq!(
+            from_str::<Value>("\"Hello, World!\"").unwrap(),
+            String("Hello, World!".into())
+        );
+        assert_eq!(
+            from_str::<Value>(".Data(\"wKgAAQ==\")").unwrap(),
+            Data(vec![192, 168, 0, 1])
+        );
     }
 }
