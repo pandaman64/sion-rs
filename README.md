@@ -1,4 +1,5 @@
-\# sion-rs
+sion-rs
+===
 
 [SION](https://dankogai.github.io/SION/) serializer/deserializer implementation in Rust.
 
@@ -42,3 +43,6 @@ fn main() {
 
 ## Future work
 - [ ] handle `.Date` correctly (now `sion-rs` treats any `.Date` as a single float, collapsing the structure)
+- [ ] benchmark and optimize
+- [ ] support other input/output formats than `str`
+- [ ] write document
