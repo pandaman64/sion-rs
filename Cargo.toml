@@ -3,6 +3,10 @@ name = "sion-rs"
 version = "0.1.0"
 authors = ["pandaman <kointosudesuyo@infoseek.jp>"]
 license = "MIT OR Apache-2.0"
+description = "SION serializer/deserializer"
+documentation = "https://github.com/pandaman64/sion-rs"
+homepage = "https://github.com/pandaman64/sion-rs"
+repository = "https://github.com/pandaman64/sion-rs"
 
 [dependencies]
 serde = "1.0"
