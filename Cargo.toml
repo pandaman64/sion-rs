@@ -2,6 +2,7 @@
 name = "sion-rs"
 version = "0.1.0"
 authors = ["pandaman <kointosudesuyo@infoseek.jp>"]
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 serde = "1.0"
